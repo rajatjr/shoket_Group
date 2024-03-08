@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Messaging App</title>
+</head>
+<body>
+  <h1>Group Messaging App</h1>
+
+  <input type="text" id="usernameInput" placeholder="Enter your username">
+  <button id="loginButton">Login</button>
+
+  <h2>Users Online</h2>
+  <ul id="userList"></ul>
+
+  <h2>Groups</h2>
+  <ul id="groupList"></ul>
+
+  <h2>Chat</h2>
+
+  <div id="messagesContainer"></div>
+
+  <input type="text" id="groupInput" placeholder="Enter group name">
+  <input type="text" id="messageInput" placeholder="Enter your message">
+  <button id="joinButton">Join Group</button>
+  <button id="leaveButton">Leave Group</button>
+  <button id="sendButton">Send</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const usernameInput = document.getElementById('usernameInput');
+    const loginButton = document.getElementById('loginButton');
+    const groupInput = document.getElementById('groupInput');
+    const joinButton = document.getElementById('joinButton');
+    const leaveButton = document.getElementById('leaveButton');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const messagesContainer = document.getElementById('messagesContainer');
+    const userList = document.getElementById('userList');
+    const groupList = document.getElementById('groupList');
+
+    loginButton.addEventListener('click', () => {
+      const username = usernameInput.value.trim();
+
+      if (username) {
+        socket.emit('login', username);
+        // usernameInput.value = '';
+        usernameInput.disabled = true;
+        loginButton.disabled = true;
+      }
+    });
+
+    joinButton.addEventListener('click', () => {
+      const group = groupInput.value.trim();
+
+      if (group) {
+        socket.emit('join-group', {group, username:usernameInput.value});
+        groupList.innerHTML = `<li>${group}</li>`
+        groupInput.value = '';
+      }
+    });
+
+    leaveButton.addEventListener('click', () => {
+      const group = groupInput.value.trim();
+
+      if (group) {
+        socket.emit('leave-group', {group, username:usernameInput.value});
+        groupInput.value = '';
+      }
+    });
+
+    sendButton.addEventListener('click', () => {
+      const group = groupInput.value.trim();
+      const message = messageInput.value.trim();
+
+      if (group && message) {
+        socket.emit('send-message', {
+          group,
+          senderName: usernameInput.value,
+          sender: socket.id,
+          message
+        });
+        messageInput.value = '';
+      }
+    });
+
+    socket.on('receive-message', (data) => {
+      const { sender, message, senderName } = data;
+
+      const messageElement = document.createElement('p');
+      messageElement.innerText = `${senderName}: ${message}`;
+      messagesContainer.appendChild(messageElement);
+    });
+
+    socket.on('user-list', (users) => {
+      userList.innerHTML = '';
+      users.forEach((user) => {
+        const userElement = document.createElement('li');
+        userElement.innerText = user;
+        userList.appendChild(userElement);
+      });
+    });
+
+    socket.on('group-list', (groups) => {
+      groupList.innerHTML = '';
+      groups.forEach((group) => {
+        const groupElement = document.createElement('li');
+        groupElement.innerText = group;
+        groupList.appendChild(groupElement);
+      });
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+<!-- ... -->
+
+<!-- <script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  // ...
+
+  socket.on('receive-message', (data) => {
+    const { sender, message } = data;
+
+    const messageElement = document.createElement('p');
+    messageElement.innerText = `${sender}: ${message}`;
+    messagesContainer.appendChild(messageElement);
+  });
+
+  // ...
+</script> -->
+
+<!-- ... -->
